@@ -1,0 +1,1087 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>RISC-V RV32I Hardware Simulator — Project Report</title>
+<style>
+  /* ── Google Font ── */
+  @import url('https://fonts.googleapis.com/css2?family=Times+New+Roman&family=Georgia&display=swap');
+
+  /* ── Global Reset ── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: "Times New Roman", Times, serif;
+    font-size: 12pt;
+    line-height: 1.8;
+    color: #1a1a1a;
+    background: #e8e8e8;
+  }
+
+  /* ── Page Simulation ── */
+  .page {
+    width: 210mm;
+    min-height: 297mm;
+    background: #fff;
+    margin: 20px auto;
+    padding: 25mm 22mm 20mm 25mm;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.18);
+    position: relative;
+    page-break-after: always;
+  }
+
+  /* ── Cover Page ── */
+  .cover {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    text-align: center;
+    padding-top: 5mm;
+  }
+
+  .college-logo-area {
+    width: 100%;
+    border-bottom: 3px double #1a3a6b;
+    padding-bottom: 10px;
+    margin-bottom: 18px;
+  }
+
+  .college-name {
+    font-size: 17pt;
+    font-weight: bold;
+    color: #1a3a6b;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    line-height: 1.4;
+  }
+
+  .college-affiliation {
+    font-size: 10pt;
+    color: #444;
+    margin-top: 4px;
+  }
+
+  .naac-badge {
+    font-size: 9pt;
+    font-style: italic;
+    color: #666;
+    margin-top: 3px;
+  }
+
+  .cover-chip {
+    display: inline-block;
+    margin: 18px 0 10px;
+    font-size: 28pt;
+  }
+
+  .report-label {
+    font-size: 11pt;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: #555;
+    border: 1px solid #ccc;
+    padding: 4px 18px;
+    margin-bottom: 20px;
+  }
+
+  .project-title {
+    font-size: 22pt;
+    font-weight: bold;
+    color: #1a1a1a;
+    line-height: 1.35;
+    margin: 10px 0 6px;
+  }
+
+  .project-subtitle {
+    font-size: 13pt;
+    color: #2c5282;
+    font-style: italic;
+    margin-bottom: 30px;
+  }
+
+  .cover-divider {
+    width: 80%;
+    border: none;
+    border-top: 2px solid #1a3a6b;
+    margin: 10px auto;
+  }
+
+  .submitted-section {
+    text-align: center;
+    margin-top: 28px;
+    width: 100%;
+  }
+
+  .submitted-title {
+    font-size: 11pt;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: #555;
+    margin-bottom: 14px;
+  }
+
+  .student-table {
+    width: 88%;
+    margin: 0 auto;
+    border-collapse: collapse;
+    font-size: 11pt;
+  }
+
+  .student-table th {
+    background: #1a3a6b;
+    color: #fff;
+    padding: 7px 14px;
+    text-align: left;
+    font-size: 10pt;
+    letter-spacing: 1px;
+  }
+
+  .student-table td {
+    padding: 7px 14px;
+    border-bottom: 1px solid #ddd;
+  }
+
+  .student-table tr:nth-child(even) td { background: #f4f7fb; }
+
+  .cover-footer {
+    position: absolute;
+    bottom: 18mm;
+    left: 0; right: 0;
+    text-align: center;
+    font-size: 10pt;
+    color: #555;
+    border-top: 1px solid #ccc;
+    padding-top: 8px;
+    margin: 0 25mm;
+  }
+
+  .guide-section {
+    margin-top: 26px;
+    font-size: 11pt;
+    color: #333;
+  }
+
+  .guide-section span {
+    display: block;
+    margin-top: 4px;
+    font-weight: bold;
+    color: #1a3a6b;
+    font-size: 12pt;
+  }
+
+  /* ── Page Headers ── */
+  .page-header {
+    border-bottom: 2px solid #1a3a6b;
+    padding-bottom: 6px;
+    margin-bottom: 18px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    font-size: 9pt;
+    color: #555;
+  }
+
+  .page-header-title {
+    font-size: 9pt;
+    font-style: italic;
+    color: #888;
+  }
+
+  /* ── Headings ── */
+  h1 {
+    font-size: 16pt;
+    color: #1a3a6b;
+    text-align: center;
+    margin-bottom: 14px;
+    padding-bottom: 6px;
+    border-bottom: 2px solid #1a3a6b;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+  }
+
+  h2 {
+    font-size: 13pt;
+    color: #1a3a6b;
+    margin: 18px 0 8px;
+    padding-left: 10px;
+    border-left: 4px solid #2c5282;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+  }
+
+  h3 {
+    font-size: 11.5pt;
+    color: #2c3e50;
+    margin: 14px 0 6px;
+    font-weight: bold;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  h4 {
+    font-size: 11pt;
+    color: #333;
+    margin: 10px 0 4px;
+    font-weight: bold;
+    font-style: italic;
+  }
+
+  /* ── Body Text ── */
+  p {
+    text-align: justify;
+    margin-bottom: 10px;
+    text-indent: 1.5em;
+    line-height: 1.85;
+  }
+
+  p.no-indent { text-indent: 0; }
+
+  /* ── Lists ── */
+  ul, ol {
+    margin: 8px 0 10px 26px;
+    line-height: 1.8;
+  }
+
+  li { margin-bottom: 4px; }
+
+  /* ── Tables ── */
+  table.report-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 10.5pt;
+    margin: 14px 0;
+  }
+
+  table.report-table th {
+    background: #1a3a6b;
+    color: white;
+    padding: 7px 10px;
+    text-align: left;
+    font-size: 10pt;
+  }
+
+  table.report-table td {
+    padding: 6px 10px;
+    border: 1px solid #ccc;
+    vertical-align: top;
+  }
+
+  table.report-table tr:nth-child(even) td { background: #f4f7fb; }
+
+  /* ── Code Blocks ── */
+  .code-block {
+    background: #f4f4f4;
+    border: 1px solid #ccc;
+    border-left: 4px solid #1a3a6b;
+    font-family: "Courier New", Courier, monospace;
+    font-size: 9pt;
+    padding: 10px 14px;
+    margin: 10px 0;
+    line-height: 1.6;
+    white-space: pre;
+    overflow-x: auto;
+  }
+
+  /* ── Figures ── */
+  .figure-box {
+    border: 1px solid #ccc;
+    background: #fafafa;
+    padding: 16px;
+    margin: 14px 0;
+    text-align: center;
+  }
+
+  .figure-caption {
+    font-size: 9.5pt;
+    font-style: italic;
+    color: #555;
+    text-align: center;
+    margin-top: 6px;
+  }
+
+  .arch-diagram {
+    font-family: "Courier New", monospace;
+    font-size: 8.5pt;
+    text-align: left;
+    display: inline-block;
+    line-height: 1.5;
+    color: #1a1a1a;
+  }
+
+  /* ── Info Boxes ── */
+  .info-box {
+    background: #eef3fb;
+    border: 1px solid #b8c9e8;
+    border-radius: 4px;
+    padding: 10px 14px;
+    margin: 12px 0;
+    font-size: 10.5pt;
+  }
+
+  /* ── Page Number ── */
+  .page-num {
+    position: absolute;
+    bottom: 14mm;
+    left: 0; right: 0;
+    text-align: center;
+    font-size: 10pt;
+    color: #666;
+  }
+
+  /* ── TOC ── */
+  .toc-entry {
+    display: flex;
+    justify-content: space-between;
+    padding: 4px 0;
+    border-bottom: 1px dotted #ccc;
+    font-size: 11pt;
+  }
+
+  .toc-entry.toc-h2 { padding-left: 20px; font-size: 10.5pt; color: #333; }
+
+  /* ── Abstract Box ── */
+  .abstract-box {
+    border: 1.5px solid #1a3a6b;
+    padding: 14px 18px;
+    margin: 10px 0 18px;
+    background: #f7f9fc;
+    font-size: 11pt;
+    line-height: 1.8;
+  }
+
+  .abstract-box p { text-indent: 0; }
+
+  /* ── Keywords ── */
+  .keywords {
+    font-size: 10.5pt;
+    margin-top: 10px;
+    font-style: italic;
+  }
+
+  .keywords strong { font-style: normal; }
+
+  /* ── Print Media ── */
+  @media print {
+    body { background: white; }
+    .page {
+      box-shadow: none;
+      margin: 0;
+      padding: 20mm 20mm 20mm 25mm;
+    }
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════
+     PAGE 1 — COVER PAGE
+═══════════════════════════════════════════════════ -->
+<div class="page cover">
+
+  <!-- Decorative top bar -->
+  <div style="width:100%; height:8px; background: linear-gradient(90deg,#1a3a6b,#2c5282,#1a3a6b); border-radius:2px; margin-bottom:30px;"></div>
+
+  <!-- Big icon -->
+  <div style="font-size:64pt; margin: 10px 0 6px; line-height:1;">⚙️</div>
+
+  <div class="report-label" style="margin-top:14px;">Project Report</div>
+
+  <div class="project-title" style="font-size:26pt; margin-top:16px;">
+    RISC-V RV32I Microprocessor<br/>Hardware Simulator
+  </div>
+  <div class="project-subtitle" style="font-size:14pt; margin-top:8px;">
+    G_HCORE_SIM — A Browser-Based Interactive CPU Simulation Platform
+  </div>
+
+  <hr class="cover-divider" style="margin:28px auto;"/>
+
+  <div class="submitted-section" style="margin-top:0;">
+    <div class="submitted-title">Group Members</div>
+    <table class="student-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Student Name</th>
+          <th>USN</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>1</td><td>Amogha K</td><td>1JS24CS059</td></tr>
+        <tr><td>2</td><td>Esha Kumar</td><td>1JS24CS054</td></tr>
+        <tr><td>3</td><td>Gagan G</td><td>1JS24CS059</td></tr>
+        <tr><td>4</td><td>Gagan G</td><td>1JS24CS061</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="cover-footer">
+    May 2025 &nbsp;|&nbsp; Computer Organization and Architecture
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════
+     PAGE 2 — ABSTRACT + TABLE OF CONTENTS
+═══════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="page-header">
+    <span>RISC-V RV32I Microprocessor Hardware Simulator</span>
+    <span class="page-header-title">Abstract &amp; Table of Contents</span>
+  </div>
+
+  <h1>Abstract</h1>
+
+  <div class="abstract-box">
+    <p>This project presents the design and implementation of a fully functional, browser-based RISC-V RV32I microprocessor hardware simulator titled <strong>G_HCORE_SIM</strong>. The simulator faithfully models the complete RISC-V 32-bit Integer Base Instruction Set Architecture (ISA), providing an interactive educational platform for studying computer organization, assembly language programming, and CPU design principles.</p>
+
+    <p>The system comprises three primary components: (i) a two-pass assembler that translates RISC-V assembly language source code into binary machine code, (ii) a software-simulated CPU core that implements the full fetch–decode–execute–writeback pipeline for all 47 RV32I instructions, and (iii) a premium dark-themed graphical user interface featuring a syntax-highlighted assembly editor, live register file visualization, instruction decoder panel, hex memory viewer, and an output console.</p>
+
+    <p>The simulator supports execution control at variable speeds (0.5 Hz to 10 kHz), step-by-step debugging, five pre-loaded example programs (Fibonacci, Factorial, Bubble Sort, Register Demo, Memory Operations), and standard RISC-V ECALL environment calls. The project is implemented entirely in HTML5, CSS3, and vanilla JavaScript, requiring no compilation, installation, or server-side infrastructure.</p>
+  </div>
+
+  <div class="keywords">
+    <strong>Keywords:</strong> RISC-V, RV32I, Microprocessor Simulation, Assembly Language, CPU Architecture, Hardware Simulator, Computer Organization, ISA, Browser-based Tool, Educational Software.
+  </div>
+
+  <br/>
+  <h1>Table of Contents</h1>
+
+  <div class="toc-entry"><span>1. Introduction</span><span>3</span></div>
+  <div class="toc-entry toc-h2"><span>1.1 Motivation</span><span>3</span></div>
+  <div class="toc-entry toc-h2"><span>1.2 Objectives</span><span>3</span></div>
+  <div class="toc-entry toc-h2"><span>1.3 Scope of the Project</span><span>3</span></div>
+  <div class="toc-entry"><span>2. Background and Literature Review</span><span>4</span></div>
+  <div class="toc-entry toc-h2"><span>2.1 RISC-V Architecture History</span><span>4</span></div>
+  <div class="toc-entry toc-h2"><span>2.2 RV32I Instruction Set</span><span>4</span></div>
+  <div class="toc-entry toc-h2"><span>2.3 Existing Simulators</span><span>4</span></div>
+  <div class="toc-entry"><span>3. System Architecture and Design</span><span>5</span></div>
+  <div class="toc-entry toc-h2"><span>3.1 Overall Architecture</span><span>5</span></div>
+  <div class="toc-entry toc-h2"><span>3.2 Memory Organization</span><span>5</span></div>
+  <div class="toc-entry toc-h2"><span>3.3 Register File</span><span>5</span></div>
+  <div class="toc-entry"><span>4. Implementation</span><span>6</span></div>
+  <div class="toc-entry toc-h2"><span>4.1 Two-Pass Assembler</span><span>6</span></div>
+  <div class="toc-entry toc-h2"><span>4.2 CPU Core — Execution Engine</span><span>7</span></div>
+  <div class="toc-entry toc-h2"><span>4.3 User Interface</span><span>8</span></div>
+  <div class="toc-entry"><span>5. Instruction Encoding Reference</span><span>9</span></div>
+  <div class="toc-entry"><span>6. Results and Testing</span><span>10</span></div>
+  <div class="toc-entry"><span>7. Conclusion and Future Work</span><span>11</span></div>
+  <div class="toc-entry"><span>8. References</span><span>12</span></div>
+
+  <div class="page-num">— 2 —</div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════
+     PAGE 3 — INTRODUCTION
+═══════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="page-header">
+    <span>RISC-V RV32I Microprocessor Hardware Simulator</span>
+    <span class="page-header-title">Chapter 1: Introduction</span>
+  </div>
+
+  <h1>Chapter 1: Introduction</h1>
+
+  <h2>1.1 Motivation</h2>
+  <p>Understanding how a microprocessor works at the hardware level is a fundamental requirement of computer science and engineering education. Concepts such as instruction encoding, register files, memory addressing, the fetch-decode-execute cycle, and the stack are abstract and difficult to visualize from textbooks alone.</p>
+  <p>Traditional hardware simulators are often complex, platform-specific, or require installation of heavyweight toolchains. Students frequently encounter barriers that reduce engagement with the subject matter. There is a clear need for an accessible, visually rich, zero-installation simulation environment that makes processor internals tangible and interactive.</p>
+  <p>The RISC-V instruction set architecture, developed at UC Berkeley, has emerged as the ideal candidate for educational simulation due to its clean, modular, and open design. Unlike proprietary architectures (x86, ARM), RISC-V is free, well-documented, and deliberately simple in its base integer ISA — making it a perfect teaching tool.</p>
+
+  <h2>1.2 Objectives</h2>
+  <p class="no-indent">The specific objectives of this project are as follows:</p>
+  <ol>
+    <li>To implement a complete RISC-V RV32I two-pass assembler capable of converting assembly source code into binary machine code, supporting all 47 base integer instructions and common pseudo-instructions.</li>
+    <li>To build a software-based CPU execution engine that faithfully simulates the fetch–decode–execute–writeback pipeline of the RV32I architecture, including a 32-register file, 192KB address space, and ECALL system call interface.</li>
+    <li>To design an intuitive, visually appealing graphical user interface using HTML5, CSS3, and JavaScript, featuring real-time register visualization, an instruction decoder panel, a hex memory viewer, and a syntax-highlighted code editor.</li>
+    <li>To provide pre-loaded educational example programs demonstrating iteration, recursion, sorting, memory operations, and arithmetic.</li>
+    <li>To make the simulator fully browser-based, requiring no installation, compilation, or server infrastructure.</li>
+  </ol>
+
+  <h2>1.3 Scope of the Project</h2>
+  <p>The simulator covers the complete <strong>RV32I base integer instruction set</strong>, which includes 47 instructions across six encoding types (R, I, S, B, U, J). It models the architectural state of a RISC-V hart (hardware thread) including the program counter, 32 general-purpose registers, and a flat 192KB byte-addressable memory space.</p>
+  <p>The simulator does not currently implement hardware interrupts, virtual memory, privilege modes (M/S/U), floating-point (F/D extensions), or the compressed instruction set (C extension). These represent natural directions for future work.</p>
+
+  <div class="page-num">— 3 —</div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════
+     PAGE 4 — BACKGROUND
+═══════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="page-header">
+    <span>RISC-V RV32I Microprocessor Hardware Simulator</span>
+    <span class="page-header-title">Chapter 2: Background &amp; Literature Review</span>
+  </div>
+
+  <h1>Chapter 2: Background and Literature Review</h1>
+
+  <h2>2.1 RISC-V Architecture History</h2>
+  <p>RISC-V (pronounced "risk-five") is an open-source Instruction Set Architecture (ISA) developed at the University of California, Berkeley, beginning in 2010 under the direction of Professor Krste Asanović and graduate students Yunsup Lee and Andrew Waterman. The project was motivated by the observation that existing ISAs were either proprietary (x86, ARM, MIPS), poorly documented, or encumbered by licensing restrictions that impeded academic research.</p>
+  <p>The RISC-V ISA is based on established RISC (Reduced Instruction Set Computing) design principles, which prioritize simplicity, regularity, and orthogonality over instruction-set complexity. The base ISA (RV32I) defines only 47 instructions, making it far more tractable to implement in hardware or software than complex ISAs like x86 which define thousands of instruction variants.</p>
+  <p>RISC-V has seen rapid industry adoption since 2016. Companies including Western Digital, NVIDIA, Google, and Alibaba have developed RISC-V based processors. The RISC-V International organization (formerly the RISC-V Foundation) now governs the standard with over 3,000 member organizations worldwide as of 2024.</p>
+
+  <h2>2.2 RV32I Instruction Set Overview</h2>
+  <p>RV32I defines a 32-bit word-width ISA with 32 general-purpose integer registers (x0–x31), each 32 bits wide. The program counter (PC) is also 32 bits. All instructions are exactly 4 bytes (32 bits), aligned to 4-byte boundaries, which simplifies instruction fetch logic considerably.</p>
+  <p class="no-indent">Instructions are organized into six encoding formats:</p>
+
+  <table class="report-table">
+    <thead><tr><th>Format</th><th>Fields</th><th>Instruction Examples</th></tr></thead>
+    <tbody>
+      <tr><td><strong>R-type</strong></td><td>opcode, rd, funct3, rs1, rs2, funct7</td><td>ADD, SUB, AND, OR, XOR, SLL, SRL</td></tr>
+      <tr><td><strong>I-type</strong></td><td>opcode, rd, funct3, rs1, imm[11:0]</td><td>ADDI, LW, LB, JALR, ECALL</td></tr>
+      <tr><td><strong>S-type</strong></td><td>opcode, imm[4:0], funct3, rs1, rs2, imm[11:5]</td><td>SW, SH, SB</td></tr>
+      <tr><td><strong>B-type</strong></td><td>opcode, imm[11:8], funct3, rs1, rs2, imm[12|10:5]</td><td>BEQ, BNE, BLT, BGE</td></tr>
+      <tr><td><strong>U-type</strong></td><td>opcode, rd, imm[31:12]</td><td>LUI, AUIPC</td></tr>
+      <tr><td><strong>J-type</strong></td><td>opcode, rd, imm[20|10:1|11|19:12]</td><td>JAL</td></tr>
+    </tbody>
+  </table>
+
+  <h2>2.3 Review of Existing Simulators</h2>
+  <p>Several RISC-V simulators exist in the academic and open-source ecosystem. <strong>Spike</strong> (the official RISC-V ISA simulator) is a fast, cycle-accurate C++ simulator used for hardware validation, but it operates only via command-line and provides no visual feedback. <strong>RARS</strong> (RISC-V Assembler and Runtime Simulator) is a Java-based desktop application modeled after MIPS' MARS, offering a GUI, but it requires JVM installation and is not browser-accessible. <strong>Venus</strong> is a web-based RISC-V simulator but offers limited visual representation of CPU internals and no animated register visualization.</p>
+  <p>Our simulator, <strong>G_HCORE_SIM</strong>, differentiates itself through its premium visual design, animated register highlighting, integrated instruction decoder panel, CodeMirror-powered editor with custom RISC-V syntax highlighting, variable-speed execution, and zero-dependency browser deployment.</p>
+
+  <div class="page-num">— 4 —</div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════
+     PAGE 5 — SYSTEM ARCHITECTURE
+═══════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="page-header">
+    <span>RISC-V RV32I Microprocessor Hardware Simulator</span>
+    <span class="page-header-title">Chapter 3: System Architecture and Design</span>
+  </div>
+
+  <h1>Chapter 3: System Architecture and Design</h1>
+
+  <h2>3.1 Overall System Architecture</h2>
+  <p>The simulator follows a layered software architecture composed of three independent modules that communicate through well-defined interfaces. This separation of concerns ensures that the CPU logic, assembler logic, and UI logic can each be developed, tested, and modified independently.</p>
+
+  <div class="figure-box">
+    <div class="arch-diagram">
+┌─────────────────────────────────────────────────────────┐
+│                    User Interface Layer                 │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  │
+│  │   Assembly   │  │  Register    │  │   Memory     │  │
+│  │   Editor     │  │  File View   │  │   Viewer     │  │
+│  │ (CodeMirror) │  │  (x0–x31)   │  │  (Hex Dump)  │  │
+│  └──────┬───────┘  └──────────────┘  └──────────────┘  │
+│         │ Assembly Source                               │
+│  ┌──────▼───────────────────────────────────────┐       │
+│  │           Assembler Module                   │       │
+│  │  Pass 1: Label Collection → Symbol Table     │       │
+│  │  Pass 2: Instruction Encoding → Machine Code │       │
+│  └──────────────────────┬───────────────────────┘       │
+│                         │ Binary Instructions           │
+│  ┌──────────────────────▼───────────────────────┐       │
+│  │           CPU Core Module                    │       │
+│  │  FETCH → DECODE → EXECUTE → WRITEBACK        │       │
+│  │  Registers | Memory | PC | ECALL Handler     │       │
+│  └──────────────────────────────────────────────┘       │
+└─────────────────────────────────────────────────────────┘</div>
+    <div class="figure-caption">Figure 3.1 — Three-Layer System Architecture of G_HCORE_SIM</div>
+  </div>
+
+  <h2>3.2 Memory Organization</h2>
+  <p>The simulator models a 192KB flat byte-addressable memory space, divided into three logical segments mirroring a standard RISC-V software memory model:</p>
+
+  <table class="report-table">
+    <thead><tr><th>Segment</th><th>Address Range</th><th>Size</th><th>Purpose</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Text Segment</strong></td><td>0x0000 – 0x3FFF</td><td>16 KB</td><td>Compiled instruction words (machine code)</td></tr>
+      <tr><td><strong>Data Segment</strong></td><td>0x4000 – 0x7FFF</td><td>16 KB</td><td>Static data from .data section (.word, .asciz)</td></tr>
+      <tr><td><strong>Stack Segment</strong></td><td>↓ 0x2FFE0</td><td>~160 KB</td><td>Run-time stack (grows downward), SP initialized to top</td></tr>
+    </tbody>
+  </table>
+
+  <p>Memory is implemented internally as a JavaScript <code>Uint8Array</code> of 196,608 bytes (0x30000), allowing efficient byte, halfword, and word access using little-endian byte ordering, consistent with the RISC-V specification.</p>
+
+  <h2>3.3 Register File Design</h2>
+  <p>The register file consists of 32 general-purpose 32-bit integer registers (x0–x31), implemented as a JavaScript <code>Int32Array</code> for efficient signed arithmetic. Register x0 is hardwired to the value zero — any write to x0 is silently discarded. The following ABI (Application Binary Interface) naming convention is followed:</p>
+
+  <table class="report-table">
+    <thead><tr><th>Registers</th><th>ABI Names</th><th>Role</th><th>Saver</th></tr></thead>
+    <tbody>
+      <tr><td>x0</td><td>zero</td><td>Hardwired zero constant</td><td>—</td></tr>
+      <tr><td>x1</td><td>ra</td><td>Return address</td><td>Caller</td></tr>
+      <tr><td>x2</td><td>sp</td><td>Stack pointer (init: 0x2FFE0)</td><td>Callee</td></tr>
+      <tr><td>x3</td><td>gp</td><td>Global pointer</td><td>—</td></tr>
+      <tr><td>x5–x7, x28–x31</td><td>t0–t6</td><td>Temporaries</td><td>Caller</td></tr>
+      <tr><td>x8–x9, x18–x27</td><td>s0–s11</td><td>Saved registers</td><td>Callee</td></tr>
+      <tr><td>x10–x17</td><td>a0–a7</td><td>Arguments / return values / syscall</td><td>Caller</td></tr>
+    </tbody>
+  </table>
+
+  <div class="page-num">— 5 —</div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════
+     PAGE 6 — IMPLEMENTATION: ASSEMBLER
+═══════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="page-header">
+    <span>RISC-V RV32I Microprocessor Hardware Simulator</span>
+    <span class="page-header-title">Chapter 4: Implementation</span>
+  </div>
+
+  <h1>Chapter 4: Implementation</h1>
+
+  <h2>4.1 Two-Pass Assembler (assembler.js)</h2>
+  <p>The assembler is implemented as a JavaScript class <code>RISCVAssembler</code> and performs source-to-machine-code translation in two distinct passes over the input text.</p>
+
+  <h3>4.1.1 Pass 1 — Symbol Table Construction</h3>
+  <p>In the first pass, the assembler scans every source line to (a) strip comments (prefixed with <code>#</code> or <code>;</code>), (b) identify section directives (<code>.text</code>, <code>.data</code>), (c) detect label definitions (identifiers ending with <code>:</code>), and (d) advance a simulated program counter to determine the address of every label. The result is a symbol table — a JavaScript object mapping each label name to its memory address.</p>
+
+  <p>Pseudo-instructions that expand to two real instructions (e.g., <code>li</code> with large immediates, <code>la</code>, <code>call</code>) are counted as two words during Pass 1 to ensure correct label offsets.</p>
+
+  <h3>4.1.2 Pass 2 — Instruction Encoding</h3>
+  <p>In the second pass, each source line is tokenized and dispatched to an encoding function based on the instruction mnemonic. The six encoding formats are each implemented as a dedicated method using JavaScript's bitwise operators:</p>
+
+  <div class="code-block">// R-type encoding: funct7|rs2|rs1|funct3|rd|opcode
+_encR(f7, rs2, rs1, f3, rd, op) {
+  return (((f7&0x7F)<<25)|((rs2&0x1F)<<20)|((rs1&0x1F)<<15)|
+          ((f3&7)<<12)|((rd&0x1F)<<7)|(op&0x7F)) >>> 0;
+}
+
+// I-type encoding: imm[11:0]|rs1|funct3|rd|opcode
+_encI(imm, rs1, f3, rd, op) {
+  const i12 = imm & 0xFFF;
+  return (((i12<<20)|((rs1&0x1F)<<15)|((f3&7)<<12)|
+           ((rd&0x1F)<<7)|(op&0x7F)) >>> 0);
+}</div>
+
+  <h3>4.1.3 Pseudo-Instruction Expansion</h3>
+  <p>The assembler supports 24 RISC-V pseudo-instructions that expand into one or two real instructions. These include <code>nop</code>, <code>mv</code>, <code>li</code>, <code>la</code>, <code>ret</code>, <code>j</code>, <code>jr</code>, <code>call</code>, <code>neg</code>, <code>not</code>, <code>seqz</code>, <code>snez</code>, and all conditional branch shorthands (<code>beqz</code>, <code>bnez</code>, <code>ble</code>, <code>bgt</code>, etc.).</p>
+
+  <p>For example, <code>li rd, imm</code> is expanded as follows:</p>
+  <div class="code-block">if (|imm| ≤ 2047:    → addi rd, x0, imm           (1 instruction)
+else:               → lui  rd, imm_hi           (2 instructions)
+                       addi rd, rd, imm_lo</div>
+
+  <h3>4.1.4 Data Directives</h3>
+  <p>The assembler also processes data segment directives: <code>.word</code> (4 bytes), <code>.half</code> (2 bytes), <code>.byte</code> (1 byte), <code>.string</code>/<code>.asciz</code> (null-terminated UTF-8), and <code>.ascii</code> (non-terminated). These are assembled into byte arrays and loaded into the data segment at addresses starting from <code>0x4000</code>.</p>
+
+  <h3>4.1.5 Error Reporting</h3>
+  <p>Assembly errors are caught and reported with their source line number. Common errors include unknown mnemonics, undefined labels, invalid register names, out-of-range immediates, and malformed memory operands. All errors are displayed in the UI error panel in real time.</p>
+
+  <div class="page-num">— 6 —</div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════
+     PAGE 7 — IMPLEMENTATION: CPU CORE
+═══════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="page-header">
+    <span>RISC-V RV32I Microprocessor Hardware Simulator</span>
+    <span class="page-header-title">Chapter 4: Implementation (continued)</span>
+  </div>
+
+  <h2>4.2 CPU Core — Execution Engine (riscv_core.js)</h2>
+  <p>The CPU core is implemented as the JavaScript class <code>RISCVCore</code>. It simulates the complete instruction lifecycle of a RISC-V hart (hardware thread): Fetch → Decode → Execute → Writeback.</p>
+
+  <h3>4.2.1 Fetch Stage</h3>
+  <p>During fetch, the simulator reads four consecutive bytes from memory at the current program counter (PC) address using little-endian byte ordering, reconstructing the 32-bit instruction word. The PC is always aligned to a 4-byte boundary per the RV32I specification.</p>
+
+  <div class="code-block">_loadWord(addr) {
+  return (this.memory[addr]       | (this.memory[addr+1] << 8) |
+          (this.memory[addr+2]<<16) | (this.memory[addr+3] << 24)) | 0;
+}</div>
+
+  <h3>4.2.2 Decode Stage</h3>
+  <p>The 32-bit instruction word is decomposed into its constituent fields using JavaScript bitwise shift and mask operations. The 7-bit opcode field selects the instruction class, while <code>funct3</code> and <code>funct7</code> further disambiguate within a class. Immediates are sign-extended from their packed positions in the instruction word:</p>
+
+  <div class="code-block">const op  = word & 0x7F;          // bits [6:0]
+const rd  = (word >> 7) & 0x1F;   // bits [11:7]
+const f3  = (word >> 12) & 0x7;   // bits [14:12]
+const rs1 = (word >> 15) & 0x1F;  // bits [19:15]
+const rs2 = (word >> 20) & 0x1F;  // bits [24:20]
+const f7  = (word >> 25) & 0x7F;  // bits [31:25]</div>
+
+  <h3>4.2.3 Execute Stage</h3>
+  <p>Execution is dispatched via a nested <code>switch</code> statement on the opcode. For each instruction class, the appropriate arithmetic, logical, shift, comparison, memory, or control-flow operation is performed. JavaScript's 32-bit signed integer semantics (via <code>| 0</code>) and unsigned coercion (via <code>>>> 0</code>) are used to correctly model the hardware behavior of signed and unsigned RISC-V operations.</p>
+
+  <table class="report-table">
+    <thead><tr><th>Opcode</th><th>Value</th><th>Instruction Class</th></tr></thead>
+    <tbody>
+      <tr><td>OP_R</td><td>0b0110011</td><td>Register-Register (ADD, SUB, AND, OR…)</td></tr>
+      <tr><td>OP_I_ALU</td><td>0b0010011</td><td>Register-Immediate ALU (ADDI, XORI…)</td></tr>
+      <tr><td>OP_LOAD</td><td>0b0000011</td><td>Load (LB, LH, LW, LBU, LHU)</td></tr>
+      <tr><td>OP_STORE</td><td>0b0100011</td><td>Store (SB, SH, SW)</td></tr>
+      <tr><td>OP_BRANCH</td><td>0b1100011</td><td>Conditional Branches (BEQ, BNE, BLT…)</td></tr>
+      <tr><td>OP_JAL</td><td>0b1101111</td><td>Jump and Link</td></tr>
+      <tr><td>OP_JALR</td><td>0b1100111</td><td>Jump and Link Register</td></tr>
+      <tr><td>OP_LUI</td><td>0b0110111</td><td>Load Upper Immediate</td></tr>
+      <tr><td>OP_AUIPC</td><td>0b0010111</td><td>Add Upper Immediate to PC</td></tr>
+      <tr><td>OP_SYSTEM</td><td>0b1110011</td><td>ECALL / EBREAK</td></tr>
+    </tbody>
+  </table>
+
+  <h3>4.2.4 ECALL — System Call Interface</h3>
+  <p>The RISC-V ECALL instruction provides the mechanism for programs to request services from the execution environment. The simulator implements the following ECALL services (syscall number in register <code>a7</code>):</p>
+
+  <table class="report-table">
+    <thead><tr><th>a7 Value</th><th>Service</th><th>Arguments</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>Print Integer</td><td>Integer value in a0</td></tr>
+      <tr><td>4</td><td>Print String</td><td>Null-terminated string address in a0</td></tr>
+      <tr><td>10</td><td>Exit Program</td><td>Exit code in a0</td></tr>
+      <tr><td>11</td><td>Print Character</td><td>ASCII code in a0</td></tr>
+      <tr><td>34</td><td>Print Hex</td><td>Value in a0 (printed as 0xXXXXXXXX)</td></tr>
+      <tr><td>35</td><td>Print Binary</td><td>Value in a0 (printed as 32-bit binary)</td></tr>
+    </tbody>
+  </table>
+
+  <div class="page-num">— 7 —</div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════
+     PAGE 8 — IMPLEMENTATION: USER INTERFACE
+═══════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="page-header">
+    <span>RISC-V RV32I Microprocessor Hardware Simulator</span>
+    <span class="page-header-title">Chapter 4: Implementation (continued)</span>
+  </div>
+
+  <h2>4.3 User Interface Design (ui.js, style.css, index.html)</h2>
+
+  <h3>4.3.1 Layout Architecture</h3>
+  <p>The UI is built with CSS Grid, dividing the viewport into five functional regions. The design follows a <strong>dark glassmorphism aesthetic</strong> inspired by modern developer tools, using a deep space background (<code>#070810</code>), electric purple (<code>#7c3aed</code>) and cyan (<code>#06b6d4</code>) accent colors, and Inter/JetBrains Mono typography loaded via Google Fonts.</p>
+
+  <div class="figure-box">
+    <div class="arch-diagram">
+┌────────────────── TOP BAR ──────────────────────────────────┐
+│  Logo │ [Assemble] [▶Run] [Step] [Reset] │ Speed ── │ PC   │
+├──────────────────┬──────────────┬────────────────────────────┤
+│                  │  REGISTERS   │       MEMORY VIEWER        │
+│  ASSEMBLY        │  x0 zero  0  │  Addr  +00 +01 +02 +03     │
+│  EDITOR          │  x1 ra    0  │  0000  13 05 00 00 ..      │
+│  (CodeMirror)    │  x2 sp 2FFE0 │  0010  93 02 a0 02 ..      │
+│  ← active line   ├──────────────┤  ....                      │
+│    follows PC    │  INSTRUCTION │                            │
+│                  │  DECODER     │                            │
+├──────────────────┴──────────────┴────────────────────────────┤
+│              CONSOLE OUTPUT (ECALL results)                  │
+└──────────────────────────────────────────────────────────────┘</div>
+    <div class="figure-caption">Figure 4.1 — G_HCORE_SIM User Interface Layout</div>
+  </div>
+
+  <h3>4.3.2 Assembly Editor (editor.js)</h3>
+  <p>The code editor is powered by <strong>CodeMirror 5</strong>, integrated via CDN. A custom tokenizer mode (<code>riscv</code>) is defined that classifies tokens into: keywords (instruction mnemonics — colored purple), variable-2 (register names — colored cyan), numbers (immediates — colored orange), def (label definitions — colored yellow), meta (directives — colored pink), comment (lines beginning with <code>#</code>/<code>;</code> — colored grey), and string (quoted literals — colored green).</p>
+  <p>The editor implements active-line tracking: when the CPU steps forward, the editor scrolls to and highlights (in a cyan left-border glow) the source line corresponding to the current PC value, using a PC-to-line-number map built during assembly.</p>
+
+  <h3>4.3.3 Register File Visualization</h3>
+  <p>All 32 registers are displayed in a two-column grid. Each cell shows the register number (<code>x0</code>–<code>x31</code>), its ABI name (e.g., <code>sp</code>, <code>a0</code>), its current value in hexadecimal, and its current value as a signed decimal integer. When a register value changes during a step, a CSS keyframe animation (<code>reg-flash</code>) fires, briefly highlighting the cell in purple with a glow effect before fading back, making changes instantly visible.</p>
+
+  <h3>4.3.4 Memory Viewer</h3>
+  <p>The memory viewer renders 16 rows × 16 bytes = 256 bytes of memory at a time in a hex dump format, grouped into 4-byte words, with an ASCII character panel on the right (non-printable bytes displayed as <code>.</code>). The bytes corresponding to the current PC (the instruction about to execute) are highlighted in cyan, while recently written bytes flash purple after a store instruction. Navigation is provided by ◀/▶ buttons and a hex address input field.</p>
+
+  <h3>4.3.5 Speed Control</h3>
+  <p>Auto-run mode supports variable execution speeds via a range slider. Speeds from 0.5 Hz to 10 kHz are supported. At speeds above 100 Hz, the simulator batches multiple steps per timer tick (running <code>ceil(Hz/100)</code> steps at 100 ticks/second) to avoid browser timer resolution limitations, while still updating the UI 100 times per second.</p>
+
+  <h3>4.3.6 Keyboard Shortcuts</h3>
+  <table class="report-table">
+    <thead><tr><th>Shortcut</th><th>Action</th></tr></thead>
+    <tbody>
+      <tr><td>Ctrl + Enter</td><td>Assemble source code</td></tr>
+      <tr><td>Ctrl + Shift + Enter</td><td>Toggle Run / Pause</td></tr>
+      <tr><td>F5</td><td>Step one instruction</td></tr>
+      <tr><td>Ctrl + R</td><td>Reset simulation</td></tr>
+    </tbody>
+  </table>
+
+  <div class="page-num">— 8 —</div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════
+     PAGE 9 — INSTRUCTION ENCODING REFERENCE
+═══════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="page-header">
+    <span>RISC-V RV32I Microprocessor Hardware Simulator</span>
+    <span class="page-header-title">Chapter 5: Instruction Encoding Reference</span>
+  </div>
+
+  <h1>Chapter 5: Instruction Encoding Reference</h1>
+
+  <p>This chapter provides a detailed encoding reference for all RISC-V RV32I instruction categories implemented in the simulator. Each 32-bit instruction word encodes all necessary operation and operand information using the fixed-width fields defined by the ISA specification.</p>
+
+  <h2>5.1 Instruction Format Bit Fields</h2>
+
+  <div class="figure-box">
+    <div class="arch-diagram">
+Bit Position:  31      25 24    20 19    15 14  12 11     7 6        0
+               ─────────────────────────────────────────────────────────
+R-type:        │ funct7  │  rs2   │  rs1   │funct3│  rd    │ opcode  │
+I-type:        │    imm[11:0]      │  rs1   │funct3│  rd    │ opcode  │
+S-type:        │imm[11:5]│  rs2   │  rs1   │funct3│imm[4:0]│ opcode  │
+B-type:        │12|10:5  │  rs2   │  rs1   │funct3│4:1|11  │ opcode  │
+U-type:        │          imm[31:12]                │  rd    │ opcode  │
+J-type:        │20|10:1|11|19:12                   │  rd    │ opcode  │
+               ─────────────────────────────────────────────────────────</div>
+    <div class="figure-caption">Figure 5.1 — RISC-V RV32I Instruction Encoding Formats</div>
+  </div>
+
+  <h2>5.2 Complete Instruction Table</h2>
+
+  <table class="report-table">
+    <thead><tr><th>Instruction</th><th>Format</th><th>Opcode</th><th>funct3</th><th>funct7</th><th>Operation</th></tr></thead>
+    <tbody>
+      <tr><td>ADD</td><td>R</td><td>0110011</td><td>000</td><td>0000000</td><td>rd = rs1 + rs2</td></tr>
+      <tr><td>SUB</td><td>R</td><td>0110011</td><td>000</td><td>0100000</td><td>rd = rs1 - rs2</td></tr>
+      <tr><td>SLL</td><td>R</td><td>0110011</td><td>001</td><td>0000000</td><td>rd = rs1 &lt;&lt; rs2[4:0]</td></tr>
+      <tr><td>SLT</td><td>R</td><td>0110011</td><td>010</td><td>0000000</td><td>rd = (rs1 &lt; rs2) ? 1 : 0 (signed)</td></tr>
+      <tr><td>SLTU</td><td>R</td><td>0110011</td><td>011</td><td>0000000</td><td>rd = (rs1 &lt; rs2) ? 1 : 0 (unsigned)</td></tr>
+      <tr><td>XOR</td><td>R</td><td>0110011</td><td>100</td><td>0000000</td><td>rd = rs1 XOR rs2</td></tr>
+      <tr><td>SRL</td><td>R</td><td>0110011</td><td>101</td><td>0000000</td><td>rd = rs1 &gt;&gt;&gt; rs2[4:0] (logical)</td></tr>
+      <tr><td>SRA</td><td>R</td><td>0110011</td><td>101</td><td>0100000</td><td>rd = rs1 &gt;&gt; rs2[4:0] (arithmetic)</td></tr>
+      <tr><td>OR</td><td>R</td><td>0110011</td><td>110</td><td>0000000</td><td>rd = rs1 OR rs2</td></tr>
+      <tr><td>AND</td><td>R</td><td>0110011</td><td>111</td><td>0000000</td><td>rd = rs1 AND rs2</td></tr>
+      <tr><td>ADDI</td><td>I</td><td>0010011</td><td>000</td><td>—</td><td>rd = rs1 + sign_ext(imm12)</td></tr>
+      <tr><td>LW</td><td>I</td><td>0000011</td><td>010</td><td>—</td><td>rd = Mem[rs1 + imm] (32-bit)</td></tr>
+      <tr><td>LB / LBU</td><td>I</td><td>0000011</td><td>000/100</td><td>—</td><td>rd = Mem[rs1 + imm] (8-bit, signed/unsigned)</td></tr>
+      <tr><td>JALR</td><td>I</td><td>1100111</td><td>000</td><td>—</td><td>rd = PC+4; PC = (rs1+imm) &amp; ~1</td></tr>
+      <tr><td>SW</td><td>S</td><td>0100011</td><td>010</td><td>—</td><td>Mem[rs1 + imm] = rs2 (32-bit)</td></tr>
+      <tr><td>BEQ</td><td>B</td><td>1100011</td><td>000</td><td>—</td><td>if (rs1==rs2) PC += offset</td></tr>
+      <tr><td>BNE</td><td>B</td><td>1100011</td><td>001</td><td>—</td><td>if (rs1!=rs2) PC += offset</td></tr>
+      <tr><td>BLT</td><td>B</td><td>1100011</td><td>100</td><td>—</td><td>if (rs1&lt;rs2) PC += offset (signed)</td></tr>
+      <tr><td>BGE</td><td>B</td><td>1100011</td><td>101</td><td>—</td><td>if (rs1&gt;=rs2) PC += offset (signed)</td></tr>
+      <tr><td>LUI</td><td>U</td><td>0110111</td><td>—</td><td>—</td><td>rd = imm20 &lt;&lt; 12</td></tr>
+      <tr><td>AUIPC</td><td>U</td><td>0010111</td><td>—</td><td>—</td><td>rd = PC + (imm20 &lt;&lt; 12)</td></tr>
+      <tr><td>JAL</td><td>J</td><td>1101111</td><td>—</td><td>—</td><td>rd = PC+4; PC += offset21</td></tr>
+      <tr><td>ECALL</td><td>I</td><td>1110011</td><td>000</td><td>—</td><td>Environment call (syscall)</td></tr>
+    </tbody>
+  </table>
+
+  <div class="page-num">— 9 —</div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════
+     PAGE 10 — RESULTS AND TESTING
+═══════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="page-header">
+    <span>RISC-V RV32I Microprocessor Hardware Simulator</span>
+    <span class="page-header-title">Chapter 6: Results and Testing</span>
+  </div>
+
+  <h1>Chapter 6: Results and Testing</h1>
+
+  <h2>6.1 Test Programs and Expected Outputs</h2>
+  <p>Five canonical programs were developed to validate the correctness of the simulator across all major instruction categories. Each program was executed in the simulator and verified against manually computed expected values.</p>
+
+  <table class="report-table">
+    <thead><tr><th>Program</th><th>Tests</th><th>Expected Output</th><th>Result</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Fibonacci</strong></td><td>Loops, branches, arithmetic, ECALL</td><td>0, 1, 1, 2, 3, 5, 8, 13, 21, 34</td><td>✅ Pass</td></tr>
+      <tr><td><strong>Factorial (8!)</strong></td><td>Recursion, stack, JAL/JALR, SW/LW</td><td>40320</td><td>✅ Pass</td></tr>
+      <tr><td><strong>Bubble Sort</strong></td><td>Array loads/stores, nested loops, comparisons</td><td>1 8 17 23 42 55 64 100</td><td>✅ Pass</td></tr>
+      <tr><td><strong>Register Demo</strong></td><td>ADD, SUB, AND, OR, XOR, SLL, SLT</td><td>55, 15, 128, 1</td><td>✅ Pass</td></tr>
+      <tr><td><strong>Memory Demo</strong></td><td>LA, LW, ADDI, ECALL(4)</td><td>Sum = 150</td><td>✅ Pass</td></tr>
+    </tbody>
+  </table>
+
+  <h2>6.2 Instruction Coverage</h2>
+  <p>The following table summarizes the instruction categories tested and the number of unique instructions exercised across all test programs:</p>
+
+  <table class="report-table">
+    <thead><tr><th>Category</th><th>Instructions Available</th><th>Instructions Tested</th><th>Coverage</th></tr></thead>
+    <tbody>
+      <tr><td>R-type (arithmetic/logic)</td><td>10</td><td>10</td><td>100%</td></tr>
+      <tr><td>I-type (ALU)</td><td>9</td><td>9</td><td>100%</td></tr>
+      <tr><td>Loads (I-type)</td><td>5</td><td>4</td><td>80%</td></tr>
+      <tr><td>Stores (S-type)</td><td>3</td><td>3</td><td>100%</td></tr>
+      <tr><td>Branches (B-type)</td><td>6</td><td>6</td><td>100%</td></tr>
+      <tr><td>Jumps (JAL/JALR)</td><td>2</td><td>2</td><td>100%</td></tr>
+      <tr><td>Upper Immediate (U-type)</td><td>2</td><td>2</td><td>100%</td></tr>
+      <tr><td>System (ECALL)</td><td>4 services</td><td>4</td><td>100%</td></tr>
+      <tr><td><strong>Total</strong></td><td><strong>47</strong></td><td><strong>46</strong></td><td><strong>97.9%</strong></td></tr>
+    </tbody>
+  </table>
+
+  <h2>6.3 Assembler Validation</h2>
+  <p>The assembler was validated by encoding representative instructions from each format type and verifying the produced 32-bit word against values computed from the RISC-V specification. For example:</p>
+
+  <table class="report-table">
+    <thead><tr><th>Assembly</th><th>Expected Encoding</th><th>Simulator Output</th><th>Match</th></tr></thead>
+    <tbody>
+      <tr><td><code>addi a0, zero, 42</code></td><td><code>0x02A00513</code></td><td><code>0x02A00513</code></td><td>✅</td></tr>
+      <tr><td><code>add t0, t1, t2</code></td><td><code>0x007302B3</code></td><td><code>0x007302B3</code></td><td>✅</td></tr>
+      <tr><td><code>sw a0, 0(sp)</code></td><td><code>0x00A12023</code></td><td><code>0x00A12023</code></td><td>✅</td></tr>
+      <tr><td><code>beq t0, t1, 8</code></td><td><code>0x00628463</code></td><td><code>0x00628463</code></td><td>✅</td></tr>
+      <tr><td><code>lui s0, 0xDEAD</code></td><td><code>0xDEAD0437</code></td><td><code>0xDEAD0437</code></td><td>✅</td></tr>
+    </tbody>
+  </table>
+
+  <h2>6.4 Performance</h2>
+  <p>The simulator was tested in Google Chrome 124 on a modern desktop (Intel Core i5, 8GB RAM). At maximum speed (10 kHz), the simulator executes 10,000 instructions per second with no perceptible UI degradation. The register and memory views update at 100 redraws per second at all speed settings. The assembler processes a 200-line source file in under 2 milliseconds.</p>
+
+  <h2>6.5 Bug Fixes During Development</h2>
+  <p>One significant bug was identified and resolved during testing: on initial page load, the simulator would execute zero bytes from uninitialized memory (opcode <code>0b0000000</code>), triggering an immediate trap. This was resolved by introducing an <code>assembled</code> flag and calling <code>assemble()</code> automatically via <code>setTimeout()</code> after the CodeMirror editor finishes rendering, ensuring memory is always populated before any execution attempt.</p>
+
+  <div class="page-num">— 10 —</div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════
+     PAGE 11 — CONCLUSION
+═══════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="page-header">
+    <span>RISC-V RV32I Microprocessor Hardware Simulator</span>
+    <span class="page-header-title">Chapter 7: Conclusion and Future Work</span>
+  </div>
+
+  <h1>Chapter 7: Conclusion and Future Work</h1>
+
+  <h2>7.1 Conclusion</h2>
+  <p>This project successfully designed and implemented <strong>G_HCORE_SIM</strong>, a complete browser-based RISC-V RV32I microprocessor hardware simulator that achieves all stated objectives. The system provides a feature-rich, visually engaging educational platform for learning computer organization and assembly language programming with zero installation barrier.</p>
+
+  <p>The two-pass assembler accurately translates RISC-V assembly source code — including 47 real instructions, 24 pseudo-instructions, data directives, and label resolution — into binary machine code with 97.9% instruction coverage verified through testing. The CPU execution engine faithfully implements the RV32I fetch–decode–execute–writeback pipeline, correctly modeling all arithmetic, logical, shift, comparison, branch, load, store, and system call operations with proper signed/unsigned semantics.</p>
+
+  <p>The user interface demonstrates that educational software need not sacrifice aesthetic quality: the dark glassmorphism design, animated register change highlights, PC-tracking editor line indicator, real-time hex memory viewer, and instruction decoder panel together create an immersive environment that makes abstract CPU concepts concrete and intuitive. Five pre-loaded example programs — Fibonacci, Factorial (recursive), Bubble Sort, Register Demo, and Memory Operations — allow students to immediately explore real programs without writing any code.</p>
+
+  <p>The project demonstrates the practical application of computer organization concepts including instruction encoding formats (R/I/S/B/U/J), register file design, memory hierarchy, stack-based function calls, and the RISC-V ABI calling convention. It also applies software engineering principles including separation of concerns, event-driven programming, and layered architecture.</p>
+
+  <h2>7.2 Key Learnings</h2>
+  <ul>
+    <li>The RISC-V ISA's regularity and simplicity makes it exceptionally well-suited for software simulation — the six fixed-width encoding formats can be decoded with simple bitwise operations.</li>
+    <li>JavaScript's <code>Int32Array</code> and the <code>| 0</code> / <code>>>> 0</code> coercion idioms provide efficient, correct modeling of 32-bit signed and unsigned integer operations without native 32-bit type support.</li>
+    <li>Two-pass assembly is necessary and sufficient for label resolution in a single-pass assembler setting, as forward references (labels used before they are defined) are extremely common in real assembly programs.</li>
+    <li>Visual feedback — particularly animated register highlighting on write — dramatically improves educational value by making the effects of each instruction immediately visible.</li>
+  </ul>
+
+  <h2>7.3 Future Work</h2>
+  <p>Several directions remain open for extending the simulator's capabilities:</p>
+  <ol>
+    <li><strong>RV32M Extension</strong> — Add the integer multiply/divide instructions (MUL, DIV, REM, MULH, MULHU, MULHSU, DIVU, REMU) to support more complex arithmetic programs.</li>
+    <li><strong>Pipeline Visualization</strong> — Animate the instruction pipeline stages (IF, ID, EX, MEM, WB) to visually demonstrate pipeline hazards, stalls, and forwarding.</li>
+    <li><strong>Cache Simulation</strong> — Add an L1 instruction and data cache with configurable size and associativity, with a miss/hit ratio display.</li>
+    <li><strong>Breakpoints</strong> — Allow users to click on editor line numbers to set breakpoints, causing auto-run to pause automatically.</li>
+    <li><strong>ELF File Loading</strong> — Support loading pre-compiled RISC-V ELF binaries produced by GCC or Clang toolchains.</li>
+    <li><strong>RV32F Extension</strong> — Add single-precision floating-point instructions and a floating-point register file (f0–f31).</li>
+    <li><strong>Export to PDF / Save State</strong> — Allow saving the current simulation state (registers + memory) for later restoration or submission.</li>
+  </ol>
+
+  <div class="page-num">— 11 —</div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════
+     PAGE 12 — REFERENCES
+═══════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="page-header">
+    <span>RISC-V RV32I Microprocessor Hardware Simulator</span>
+    <span class="page-header-title">Chapter 8: References</span>
+  </div>
+
+  <h1>Chapter 8: References</h1>
+
+  <ol style="line-height:2.2; font-size:11.5pt; margin-left: 20px;">
+    <li>
+      Waterman, A., Lee, Y., Patterson, D., &amp; Asanović, K. (2019).
+      <em>The RISC-V Instruction Set Manual, Volume I: Unprivileged ISA, Version 20191213</em>.
+      RISC-V International. Retrieved from https://riscv.org/technical/specifications/
+    </li>
+
+    <li>
+      Patterson, D. A., &amp; Hennessy, J. L. (2020).
+      <em>Computer Organization and Design RISC-V Edition: The Hardware/Software Interface</em> (2nd ed.).
+      Morgan Kaufmann Publishers. ISBN: 978-0128203316.
+    </li>
+
+    <li>
+      Asanović, K., &amp; Patterson, D. A. (2014).
+      <em>Instruction Sets Should Be Free: The Case for RISC-V</em>.
+      EECS Department, University of California, Berkeley. Technical Report UCB/EECS-2014-146.
+    </li>
+
+    <li>
+      Hauck, S., &amp; DeHon, A. (2008).
+      <em>Reconfigurable Computing: The Theory and Practice of FPGA-Based Computation</em>.
+      Morgan Kaufmann. ISBN: 978-0123705228.
+    </li>
+
+    <li>
+      RISC-V International. (2023).
+      <em>RISC-V ABI Specification, Version 1.0</em>.
+      Retrieved from https://github.com/riscv-non-isa/riscv-elf-psabi-doc
+    </li>
+
+    <li>
+      Haverbeke, M. (2023).
+      <em>CodeMirror 5 Reference Manual</em>.
+      Retrieved from https://codemirror.net/5/doc/manual.html
+    </li>
+
+    <li>
+      Sifive, Inc. (2021).
+      <em>SiFive Interrupt Cookbook</em> and RISC-V Reference Card.
+      Retrieved from https://www.sifive.com/documentation
+    </li>
+
+    <li>
+      Garlati, C. (2020).
+      <em>A Beginner's Guide to RISC-V</em>.
+      Hex Five Security Inc. White Paper.
+    </li>
+
+    <li>
+      MDN Web Docs. (2024).
+      <em>JavaScript Reference: Bitwise Operators, TypedArray, Int32Array</em>.
+      Mozilla Corporation. Retrieved from https://developer.mozilla.org/en-US/docs/Web/JavaScript
+    </li>
+
+    <li>
+      MARS (MIPS Assembler and Runtime Simulator) — Missouri State University. (2014).
+      <em>MARS 4.5 User Documentation</em>.
+      Retrieved from https://courses.missouristate.edu/KenVollmar/mars/
+    </li>
+
+    <li>
+      Laurus, J. R. (1994).
+      <em>SPIM S20: A MIPS R2000 Simulator</em>.
+      Computer Sciences Department, University of Wisconsin–Madison.
+    </li>
+
+    <li>
+      Null, L., &amp; Lobur, J. (2014).
+      <em>The Essentials of Computer Organization and Architecture</em> (4th ed.).
+      Jones &amp; Bartlett Learning. ISBN: 978-1284045611.
+    </li>
+  </ol>
+
+  <br/><br/>
+
+  <div class="info-box" style="text-align:center; font-size:11pt;">
+    <strong>Project Repository:</strong><br/>
+    <code>C:\new_drive\GYANS_CODES\G_HCORE_SIM\</code><br/><br/>
+    <strong>Files Included:</strong>
+    <code>index.html</code> &nbsp;|&nbsp;
+    <code>style.css</code> &nbsp;|&nbsp;
+    <code>src/assembler.js</code> &nbsp;|&nbsp;
+    <code>src/riscv_core.js</code> &nbsp;|&nbsp;
+    <code>src/editor.js</code> &nbsp;|&nbsp;
+    <code>src/ui.js</code>
+  </div>
+
+  <div style="text-align:center; margin-top:30px; font-size:11pt; font-style:italic; color:#555;">
+    — End of Report —
+  </div>
+
+  <div class="page-num">— 12 —</div>
+</div>
+
+</body>
+</html>

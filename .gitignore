@@ -1,0 +1,21 @@
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor/IDE
+.vscode/
+.idea/
+*.suo
+*.user
+
+# Logs
+*.log
+
+# Node (if ever added)
+node_modules/
+npm-debug.log*
+
+# Build output (if ever added)
+dist/
+build/

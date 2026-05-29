@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>RISC-V RV32I Hardware Simulator | G_HCORE_SIM</title>
+    <meta name="description" content="A visual RISC-V RV32I microprocessor hardware simulator with step-by-step execution, register visualization, memory viewer and assembly editor." />
+
+    <!-- CodeMirror CDN -->
+    <link rel="stylesheet"  href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+
+    <!-- App Stylesheet -->
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<div id="app">
+
+    <!-- ═══════════════════════════════════════════════════════
+         TOP BAR
+         ═══════════════════════════════════════════════════════ -->
+    <header id="topbar" role="banner">
+
+        <!-- Brand -->
+        <div class="brand">
+            <div class="brand-icon">⚡</div>
+            <div>
+                <div class="brand-name">G_HCORE_SIM</div>
+                <div class="brand-sub">RISC-V RV32I SIMULATOR</div>
+            </div>
+        </div>
+
+        <div class="topbar-sep"></div>
+
+        <!-- Assemble -->
+        <button id="btn-assemble" class="btn btn-primary" title="Assemble source code (Ctrl+Enter)">
+            🔧 Assemble
+        </button>
+
+        <div class="topbar-sep"></div>
+
+        <!-- Run controls -->
+        <button id="btn-run"   class="btn btn-success" title="Run / Pause simulation">▶ Run</button>
+        <button id="btn-step"  class="btn btn-neutral" title="Execute one instruction">⏭ Step</button>
+        <button id="btn-reset" class="btn btn-neutral" title="Reset simulation to start">↺ Reset</button>
+
+        <div class="topbar-sep"></div>
+
+        <!-- Speed control -->
+        <div class="speed-group" title="Execution speed in instructions per second">
+            <label for="speed-slider">Speed</label>
+            <input id="speed-slider" type="range" min="0.5" max="10000" step="0.5" value="4" />
+            <span id="speed-label">4Hz</span>
+        </div>
+
+        <!-- Right side -->
+        <div class="topbar-right">
+            <span id="cycle-count">Cycles: 0</span>
+            <span id="pc-display">0x00000000</span>
+            <span id="status-text" class="status-ready">Ready</span>
+        </div>
+    </header>
+
+    <!-- ═══════════════════════════════════════════════════════
+         MAIN CONTENT
+         ═══════════════════════════════════════════════════════ -->
+    <main id="main-content" role="main">
+
+        <!-- ── Editor Panel ─────────────────────────────────── -->
+        <section id="editor-panel" class="panel" aria-label="Assembly code editor">
+            <div class="panel-header">
+                <div class="panel-dot dot-purple"></div>
+                <span class="panel-title">Assembly Editor</span>
+                <div class="editor-controls">
+                    <select id="example-select" title="Load a pre-built example program">
+                        <option value="">Load Example…</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- CodeMirror attaches here -->
+            <div class="editor-wrapper">
+                <textarea id="asm-editor" autocomplete="off" autocorrect="off" spellcheck="false"></textarea>
+            </div>
+
+            <!-- Assembly error display -->
+            <div id="error-panel" role="alert" aria-live="polite"></div>
+        </section>
+
+        <!-- ── Register + Decoder Panels ────────────────────── -->
+        <div id="right-panels">
+
+            <!-- Register File -->
+            <section id="register-panel" aria-label="CPU register file">
+                <div class="panel-header">
+                    <div class="panel-dot dot-cyan"></div>
+                    <span class="panel-title">Register File (x0–x31)</span>
+                </div>
+                <div id="reg-grid" role="grid" aria-label="Register values"></div>
+            </section>
+
+            <!-- Instruction Decoder -->
+            <section id="decoder-panel-wrapper" aria-label="Instruction decoder">
+                <div class="panel-header">
+                    <div class="panel-dot dot-purple"></div>
+                    <span class="panel-title">Instruction Decoder</span>
+                </div>
+                <div id="decoder-panel">
+                    <span class="decoder-idle">No instruction fetched yet</span>
+                </div>
+            </section>
+
+        </div>
+
+        <!-- ── Memory Viewer Panel ───────────────────────────── -->
+        <section id="memory-panel" class="panel" aria-label="Memory viewer">
+            <div class="panel-header">
+                <div class="panel-dot dot-green"></div>
+                <span class="panel-title">Memory Viewer</span>
+                <div class="mem-nav">
+                    <button id="btn-mem-prev" class="btn btn-sm btn-neutral" title="Previous 128 bytes">◀</button>
+                    <input id="mem-addr-input" type="text" value="0000" maxlength="8" title="Hex base address" />
+                    <button id="btn-mem-next" class="btn btn-sm btn-neutral" title="Next 128 bytes">▶</button>
+                </div>
+            </div>
+
+            <div class="mem-table-wrapper">
+                <table id="mem-table" aria-label="Memory hex dump">
+                    <thead>
+                        <tr>
+                            <th>Address</th>
+                            <th>+00 +01 +02 +03</th>
+                            <th>+04 +05 +06 +07</th>
+                            <th>+08 +09 +0A +0B</th>
+                            <th>+0C +0D +0E +0F</th>
+                            <th>ASCII</th>
+                        </tr>
+                    </thead>
+                    <tbody id="mem-tbody"></tbody>
+                </table>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ═══════════════════════════════════════════════════════
+         CONSOLE PANEL
+         ═══════════════════════════════════════════════════════ -->
+    <footer id="console-panel" role="complementary" aria-label="Program output console">
+        <div class="panel-header">
+            <div class="panel-dot dot-green"></div>
+            <span class="panel-title">Console Output</span>
+            <div style="margin-left:auto; display:flex; gap:6px;">
+                <span style="font-size:11px; color:var(--text-muted); font-family:var(--font-mono);">
+                    ecall a7=1: print int &nbsp;|&nbsp; a7=4: print str &nbsp;|&nbsp; a7=10: exit &nbsp;|&nbsp; a7=11: print char
+                </span>
+                <button id="btn-clear-console" class="btn btn-sm btn-danger" title="Clear console">✕ Clear</button>
+            </div>
+        </div>
+        <div id="output-console" role="log" aria-live="polite" aria-label="Program output"></div>
+    </footer>
+
+</div><!-- #app -->
+
+<!-- ═══════════════════════════════════════════════════════════
+     Scripts — order matters (no bundler, plain ES5-compatible)
+     ═══════════════════════════════════════════════════════════ -->
+<script src="src/assembler.js"></script>
+<script src="src/riscv_core.js"></script>
+<script src="src/editor.js"></script>
+<script src="src/ui.js"></script>
+
+<!-- Keyboard shortcuts -->
+<script>
+    document.addEventListener('keydown', function(e) {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+            e.preventDefault();
+            document.getElementById('btn-assemble').click();
+        }
+        if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'Enter') {
+            e.preventDefault();
+            document.getElementById('btn-run').click();
+        }
+        if (e.key === 'F5') {
+            e.preventDefault();
+            document.getElementById('btn-step').click();
+        }
+        if ((e.ctrlKey || e.metaKey) && e.key === 'r') {
+            e.preventDefault();
+            document.getElementById('btn-reset').click();
+        }
+    });
+</script>
+</body>
+</html>
